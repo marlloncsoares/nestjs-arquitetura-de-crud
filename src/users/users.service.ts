@@ -1,58 +1,47 @@
 import { Injectable } from '@nestjs/common';
-import { EntityNotFoundError } from 'src/errors/entity-not-found.error';
+import { Prisma, User } from '@prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [
-    {
-      id: 1,
-      name: 'Marllon Soares',
-      email: 'marlonmcs@hotmail.com',
-    },
-  ];
+  constructor(private readonly prisma: PrismaService) {}
 
-  create(createUserDto: CreateUserDto) {
-    const id = this.users[this.users.length - 1].id + 1;
-    const newUser = {
-      id,
-      ...createUserDto,
+  async findOne(id: number): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
+  async findAll(): Promise<User[]> {
+    return this.prisma.user.findMany();
+  }
+
+  async create(dto: CreateUserDto): Promise<User> {
+    const data: Prisma.UserCreateInput = {
+      ...dto,
     };
 
-    this.users.push(newUser);
-    return newUser;
+    return this.prisma.user.create({
+      data,
+    });
   }
 
-  findAll() {
-    return this.users;
-  }
-
-  findOne(id: number) {
-    const user = this.users.find((user): boolean => user.id === id);
-    if (!user) {
-      throw new EntityNotFoundError();
-    }
-    return user;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    const user = this.findOne(id);
-    const index = this.users.indexOf(user);
-
-    const newUser = {
-      ...user,
-      ...updateUserDto,
+  async update(id: number, dto: UpdateUserDto): Promise<User> {
+    const data: Prisma.UserUpdateInput = {
+      ...dto,
     };
 
-    this.users[index] = newUser;
-    return newUser;
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
   }
 
-  remove(id: number) {
-    const user = this.findOne(id);
-    const index = this.users.indexOf(user);
-    this.users.splice(index, 1);
+  async remove(id: number): Promise<User> {
+    return this.prisma.user.delete({
+      where: { id },
+    });
   }
 }
